@@ -1,0 +1,77 @@
+#pragma once
+
+#include "types.h"
+#include <dirent.h>
+
+#define MAX_SWITCHPATH 0x300
+
+typedef enum {
+    VALIDITY_UNCHECKED = 0,
+    VALIDITY_INVALID,
+    VALIDITY_VALID
+} validity_t;
+
+#ifdef _MSC_VER
+inline int fseeko64(FILE *__stream, long long __off, int __whence)
+{
+    return _fseeki64(__stream, __off, __whence);
+}
+#elif __APPLE__ || __CYGWIN__ 
+    // OS X file I/O is 64bit
+    #define fseeko64 fseek
+#elif __linux__ || __WIN32
+    extern int fseeko64 (FILE *__stream, __off64_t __off, int __whence);
+#else
+    /* fseeko is guaranteed by POSIX, hopefully the OS made their off_t definition 64-bit;
+     * known sane on FreeBSD and OpenBSD.
+     */
+    #define fseeko64 fseeko
+#endif
+
+#ifdef _WIN32
+typedef wchar_t oschar_t; /* utf-16 */
+typedef _WDIR osdir_t;
+typedef struct _wdirent osdirent_t;
+
+#define os_fopen _wfopen
+#define os_opendir _wopendir
+#define os_readdir _wreaddir
+#define os_stat _wstati64
+
+#define OS_MODE_READ L"rb"
+#define OS_MODE_WRITE L"wb"
+#define OS_MODE_EDIT L"rb+"
+#else
+typedef char oschar_t; /* utf-8 */
+typedef DIR osdir_t;
+typedef struct dirent osdirent_t;
+
+#define os_fopen fopen
+#define os_opendir opendir
+#define os_readdir readdir
+#define os_stat stati64
+
+#define OS_MODE_READ "rb"
+#define OS_MODE_WRITE "wb"
+#define OS_MODE_EDIT "rb+"
+#endif
+
+#define OS_PATH_SEPARATOR "/"
+
+typedef struct filepath {
+    char char_path[MAX_SWITCHPATH];
+    oschar_t os_path[MAX_SWITCHPATH];
+    validity_t valid;
+} filepath_t;
+
+void os_strcpy(oschar_t *dst, const char *src);
+int os_makedir(const oschar_t *dir);
+int os_rmdir(const oschar_t *dir);
+
+void filepath_init(filepath_t *fpath);
+void filepath_copy(filepath_t *fpath, filepath_t *copy);
+void filepath_os_append(filepath_t *fpath, oschar_t *path);
+void filepath_append(filepath_t *fpath, const char *format, ...);
+void filepath_append_n(filepath_t *fpath, uint32_t n, const char *format, ...);
+void filepath_set(filepath_t *fpath, const char *path);
+oschar_t *filepath_get(filepath_t *fpath);
