@@ -4,12 +4,11 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <dirent.h>
-#include <iconv.h>
 
 #include "types.h"
 #include "filepath.h"
 
-/* Build with: gcc -o build_romfs build_romfs.c build_filepath.c -liconv */
+/* Build with: gcc -o build_romfs build_romfs.c build_filepath.c */
 
 struct romfs_fent_ctx;
 

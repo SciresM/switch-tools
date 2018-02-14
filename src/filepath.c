@@ -4,52 +4,27 @@
 #include <string.h>
 #include <stdarg.h>
 
-#include <iconv.h>
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
 
 #include "types.h"
 #include "filepath.h"
 
-void os_strcpy(oschar_t *dst, const char *src) {
+void os_strncpy(oschar_t *dst, const char *src, size_t size) {
 #ifdef _WIN32
-    if (src == NULL) return;
-
-    uint32_t src_len, dst_len;
-    size_t in_bytes, out_bytes;
-    char *in, *out;
-    src_len = strlen(src);
-    dst_len = src_len + 1;
-    in = (char *)src;
-    out = (char *)dst;
-    in_bytes = src_len;
-    out_bytes = dst_len * sizeof(oschar_t);
-
-    iconv_t cd = iconv_open("UTF-16LE", "UTF-8");
-    iconv(cd, &in, &in_bytes, &out, &out_bytes);
-    iconv_close(cd);
+    MultiByteToWideChar(CP_UTF8, 0, src, -1, dst, size);
 #else
-    strcpy(dst, src);
+    strncpy(dst, src, size);
 #endif
 }
 
-void os_strcpy_to_char(char *dst, const oschar_t *src) {
+void os_strncpy_to_char(char *dst, const oschar_t *src, size_t size) {
 #ifdef _WIN32
-    if (src == NULL) return;
-
-    uint32_t src_len, dst_len;
-    size_t in_bytes, out_bytes;
-    char *in, *out;
-    src_len = wcslen(src);
-    dst_len = src_len + 1;
-    in = (char *)src;
-    out = (char *)dst;
-    in_bytes = src_len * sizeof(oschar_t);
-    out_bytes = dst_len;
-
-    iconv_t cd = iconv_open("UTF-8", "UTF-16LE");
-    iconv(cd, &in, &in_bytes, &out, &out_bytes);
-    iconv_close(cd);
+    WideCharToMultiByte(CP_UTF8, 0, src, -1, dst, size, NULL, NULL);
 #else
-    strcpy(dst, src);
+    strncpy(dst, src, size);
 #endif
 }
 
@@ -71,7 +46,7 @@ int os_rmdir(const oschar_t *dir) {
 
 void filepath_update(filepath_t *fpath) {
     memset(fpath->os_path, 0, MAX_SWITCHPATH * sizeof(oschar_t));
-    os_strcpy(fpath->os_path, fpath->char_path);
+    os_strncpy(fpath->os_path, fpath->char_path, MAX_SWITCHPATH);
 }
 
 void filepath_init(filepath_t *fpath) {
@@ -92,7 +67,7 @@ void filepath_os_append(filepath_t *fpath, oschar_t *path) {
     
     memset(tmppath, 0, MAX_SWITCHPATH);
     
-    os_strcpy_to_char(tmppath, path);
+    os_strncpy_to_char(tmppath, path, MAX_SWITCHPATH);
     strcat(fpath->char_path, OS_PATH_SEPARATOR);
     strcat(fpath->char_path, tmppath);
     filepath_update(fpath);

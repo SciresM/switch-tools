@@ -2,6 +2,9 @@
 
 #include "types.h"
 #include <dirent.h>
+#ifdef _WIN32
+#include <direct.h>
+#endif
 
 #define MAX_SWITCHPATH 0x300
 
@@ -19,7 +22,7 @@ inline int fseeko64(FILE *__stream, long long __off, int __whence)
 #elif __APPLE__ || __CYGWIN__ 
     // OS X file I/O is 64bit
     #define fseeko64 fseek
-#elif __linux__ || __WIN32
+#elif __linux__
     extern int fseeko64 (FILE *__stream, __off64_t __off, int __whence);
 #else
     /* fseeko is guaranteed by POSIX, hopefully the OS made their off_t definition 64-bit;
@@ -64,7 +67,8 @@ typedef struct filepath {
     validity_t valid;
 } filepath_t;
 
-void os_strcpy(oschar_t *dst, const char *src);
+void os_strncpy(oschar_t *dst, const char *src, size_t size);
+void os_strncpy_to_char(char *dst, const oschar_t *src, size_t size);
 int os_makedir(const oschar_t *dir);
 int os_rmdir(const oschar_t *dir);
 
